@@ -34,7 +34,7 @@ export function SignUp() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         console.log("Submitting signup with:", { nom, prenom, email, password, role });
-        try {
+        try {   
             await signup(nom, prenom, email, password, role);
             alert("User created and logged in!");
         } catch (err: any) {

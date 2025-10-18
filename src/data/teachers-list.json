@@ -1,0 +1,122 @@
+[
+  {
+    "id":1,
+    "name": "John Smith",
+    "email": "john.smith@school.edu",
+    "code": "TCH001",
+    "groupAssigned": ["Group A", "Group B"],
+    "actions":""
+  },
+  {
+    "id":2,
+    "name": "Emily Johnson",
+    "email": "emily.johnson@school.edu",
+    "code": "TCH002",
+    "groupAssigned": ["Group C"],
+    "actions":""
+  },
+  {
+    "id":3,
+    "name": "Michael Brown",
+    "email": "michael.brown@school.edu",
+    "code": "TCH003",
+    "groupAssigned": ["Group A"],
+    "actions": ""
+  },
+  {
+    "id":4,
+    "name": "Sophia Davis",
+    "email": "sophia.davis@school.edu",
+    "code": "TCH004",
+    "groupAssigned": ["Group D", "Group E"],
+    "actions": ""
+  },
+  {
+    "id":5,
+    "name": "James Wilson",
+    "email": "james.wilson@school.edu",
+    "code": "TCH005",
+    "groupAssigned": ["Group A", "Group E"],
+    "actions":""
+  },
+  {
+    "id":6,
+    "name": "Benjamin Lee",
+    "email": "benjamin.lee@school.edu",
+    "code": "TCH011",
+    "groupAssigned": ["Group J", "Group K"],
+    "actions": ""
+  },
+  {
+    "id":7,
+    "name": "Charlotte Perez",
+    "email": "charlotte.perez@school.edu",
+    "code": "TCH012",
+    "groupAssigned": ["Group L"],
+    "actions":""
+  },
+  {
+    "id":8,
+    "name": "Alexander Young",
+    "email": "alexander.young@school.edu",
+    "code": "TCH013",
+    "groupAssigned": ["Group A", "Group M"],
+    "actions": ""
+  },
+  {
+    "id":9,
+    "name": "Amelia Hernandez",
+    "email": "amelia.hernandez@school.edu",
+    "code": "TCH014",
+    "groupAssigned": ["Group N"],
+    "actions":""
+  },
+  {
+    "id":10,
+    "name": "Ethan King",
+    "email": "ethan.king@school.edu",
+    "code": "TCH015",
+    "groupAssigned": ["Group K"],
+    "actions": ""
+  },
+  {
+    "id":11,
+    "name": "Olivia Martinez",
+    "email": "olivia.martinez@school.edu",
+    "code": "TCH006",
+    "groupAssigned": ["Group F"],
+    "actions":""
+  },
+  {
+    "id":12,
+    "name": "William Anderson",
+    "email": "william.anderson@school.edu",
+    "code": "TCH007",
+    "groupAssigned": ["Group B", "Group G"],
+    "actions": ""
+  },
+  {
+    "id":13,
+    "name": "Isabella Thomas",
+    "email": "isabella.thomas@school.edu",
+    "code": "TCH008",
+    "groupAssigned": ["Group H"],
+    "actions":""
+  },
+  {
+    "id":14,
+    "name": "Daniel Garcia",
+    "email": "daniel.garcia@school.edu",
+    "code": "TCH009",
+    "groupAssigned": ["Group C", "Group D"],
+    "actions": ""
+  },
+  {
+    "id":15,
+    "name": "Mia Rodriguez",
+    "email": "mia.rodriguez@school.edu",
+    "code": "TCH010",
+    "groupAssigned": ["Group I"],
+    "actions":""
+  }
+]

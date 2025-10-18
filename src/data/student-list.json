@@ -1,0 +1,44 @@
+[
+  {
+    "id": "stu001",
+    "name": "Ahmed El Mansouri",
+    "massarNumber": "M2023001",
+    "group": "Group A",
+    "actions":""
+  },
+  {
+    "id": "stu002",
+    "name": "Sara Benali",
+    "massarNumber": "M2023002",
+    "group": "Group A",
+    "actions":""
+  },
+  {
+    "id": "stu003",
+    "name": "Youssef Amrani",
+    "massarNumber": "M2023003",
+    "group": "Group B",
+    "actions":""
+  },
+  {
+    "id": "stu004",
+    "name": "Imane Zahraoui",
+    "massarNumber": "M2023004",
+    "group": "Group C",
+    "actions":""
+  },
+  {
+    "id": "stu005",
+    "name": "Hassan Oulhaj",
+    "massarNumber": "M2023005",
+    "group": "Group B",
+    "actions":""
+  },
+  {
+    "id": "stu006",
+    "name": "Khadija Lahlou",
+    "massarNumber": "M2023006",
+    "group": "Group D",
+    "actions":""
+  }
+]

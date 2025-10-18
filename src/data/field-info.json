@@ -1,0 +1,38 @@
+[
+  {
+    "id": "fld001",
+    "name": "Computer Science",
+    "numberOfGroups": 5,
+    "actions" :""
+  },
+  {
+    "id": "fld002",
+    "name": "Mathematics",
+    "numberOfGroups": 3,
+    "actions" :""
+  },
+  {
+    "id": "fld003",
+    "name": "Physics",
+    "numberOfGroups": 4,
+    "actions" :""
+  },
+  {
+    "id": "fld004",
+    "name": "Biology",
+    "numberOfGroups": 2,
+    "actions" :""
+  },
+  {
+    "id": "fld005",
+    "name": "Economics",
+    "numberOfGroups": 3,
+    "actions" :""
+  },
+  {
+    "id": "fld006",
+    "name": "Artificial Intelligence",
+    "numberOfGroups": 2,
+    "actions" :""
+  }
+]
