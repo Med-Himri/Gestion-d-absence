@@ -8,10 +8,11 @@ import {
 } from "lucide-react"
 import { FormCourse } from "@/components/layout/add-course"
 import { useCoursesStore } from "@/store/course-store"
+import { EditCourse } from "@/components/layout/edit-coure"
 
 export default function CoursePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const {courses, loading, fetchCourses } = useCoursesStore()
+  const {courses, loading, fetchCourses,deleteCourse } = useCoursesStore()
 
   useEffect(() => {
     fetchCourses()
@@ -58,15 +59,10 @@ export default function CoursePage() {
                     <TableRow key={id} >
                       <TableCell className="font-medium dark:text-neutral-400  text-neutral-900">{course.course_name}</TableCell>
                       <TableCell className="text-neutral-700">
-                        <button
-                          onClick={() => console.log("Modifier:",)}
-                          className="px-3 py-1 dark:text-blue-400 text-blue-600"
-                        >
-                          Edit
-                        </button>
+                       <EditCourse course={course} />
 
                         <button
-                          onClick={() => console.log("Suprime:",)}
+                          onClick={() => deleteCourse(course.course_id)}
                           className="px-3 py-1 dark:text-red-400 text-red-600"
                         >
                           Delete

@@ -33,7 +33,7 @@ export function FormTeacher() {
   const [open, setOpen] = useState(false);
   const [ouver, setOuver] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [selectedCourses, setSelectedCourses] = useState<string>("");
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,10 +42,10 @@ export function FormTeacher() {
   const { groups, fetchGroups, loading } = useGroupStore();
   const { courses, fetchCourses} = useCoursesStore()
 
-  useEffect(() => {
-    fetchGroups(),
-    fetchCourses();
-  }, [fetchGroups,fetchCourses]);
+    useEffect(() => {
+      fetchGroups(),
+      fetchCourses();
+    }, [fetchGroups,fetchCourses]);
 
   const toggleGroup = (group_id: string) => {
     setSelectedGroups((prev) =>
@@ -54,12 +54,12 @@ export function FormTeacher() {
   };
 
   const selectCourse = (course_id: string) => {
-  setSelectedCourses(course_id); // just one
+  setSelectedCourse(course_id); // just one
   setOuver(false); // close the popover after selection
 };
 
   const handleSubmit = async () => {
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !selectedCourse || selectedGroups.length === 0) {
       alert("Veuillez remplir tous les champs obligatoires");
       return;
     }
@@ -70,15 +70,14 @@ export function FormTeacher() {
         email,
         password,
         group_ids: selectedGroups,
-        course_id: selectedCourses,
-        course: ""
+        course_id: selectedCourse,
       });
 
       alert("Enseignant ajouté avec succès !");
       setName("");
       setEmail("");
       setPassword("");
-      setSelectedCourses("");
+      setSelectedCourse("");
       setSelectedGroups([]);
       setOuver(false);
       setOpen(false);
@@ -154,12 +153,12 @@ export function FormTeacher() {
               <Popover open={ouver} onOpenChange={setOuver}>
                 <PopoverTrigger asChild>
                   <Button className="w-full justify-between font-normal dark:text-neutral-400 text-neutral-600 hover:bg-neutral-100 bg-white border-2">
-                    {selectedCourses
+                    {selectedCourse
                       ? courses
-                         .find(c => c.course_id === selectedCourses)?.course_name
+                         .find(c => c.course_id === selectedCourse)?.course_name
                       : loading
                         ? "Chargement des courses..."
-                        : "Sélectionner des courses..."}
+                        : "Sélectionner un courses..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -177,7 +176,7 @@ export function FormTeacher() {
                           <Check
                             className={cn(
                               "mr-2 h-4 w-4",
-                              selectedCourses === course.course_id ? "opacity-100" : "opacity-0"
+                              selectedCourse === course.course_id ? "opacity-100" : "opacity-0"
                             )}
                           />
                           {course.course_name}

@@ -7,16 +7,65 @@ import {
     DialogHeader,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Layers } from "lucide-react";
+import { Plus, Layers, ChevronsUpDown, Check } from "lucide-react";
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "../ui/button";
-
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "../ui/command";
+import { useFieldStore } from "@/store/field-store";
+import { useGroupStore } from "@/store/groupe-store";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 
 export function FormGroup() {
+    const { addGroup } = useGroupStore();
+    const { fields, loading: fieldsLoading, fetchFields } = useFieldStore()
+    const [ouver, setOuver] = useState(false);
+    const [selectedFields, setSelectedFields] = useState<string>("");
 
+    const [form, setForm] = useState({
+        name: "",
+        year: "",
+        number_student: "",
+    });
 
+    useEffect(() => {
+        fetchFields()
+    }, [fetchFields])
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const selectField = (id: string) => {
+        setSelectedFields(id); // just one
+        setOuver(false); // close the popover after selection
+    };
+
+    const handleSubmit = async () => {
+        if (!form.name || !form.year || !form.number_student || !selectedFields) {
+            alert("Veuillez remplir tous les champs obligatoires !");
+            return;
+        }
+
+        try {
+            await addGroup({
+                name: form.name,
+                year: form.year,
+                number_student: Number(form.number_student),
+                field_id: selectedFields,
+            });
+
+            alert("Groupe ajouté avec succès !");
+            setForm({ name: "", year: "", number_student: "" });
+            setSelectedFields("");
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors de l'ajout du groupe !");
+        }
+    };
     return (
         <div  >
             {/* Nouveau Client Dialog */}
@@ -53,7 +102,11 @@ export function FormGroup() {
                                     Nom de Groupe *
                                 </Label>
                                 <Input
-                                    id="lastName"
+                                    id="name"
+                                    name="name"
+                                    value={form.name}
+                                    onChange={handleInputChange}
+                                    placeholder="Nom du Groupe"
                                 />
                             </div>
 
@@ -64,25 +117,64 @@ export function FormGroup() {
                             </Label>
                             <Input
                                 id="year"
-                                type="year"
+                                name="year"
+                                value={form.year}
+                                onChange={handleInputChange}
+                                placeholder="Année"
                             />
                         </div>
                         <div>
                             <Label htmlFor="Filiére" className="text-sm dark:text-neutral-400 text-neutral-600">
                                 Filiére  *
                             </Label>
-                            <Input
-                                id="Filiére"
-                                type="text"
-                            />
+                            <Popover open={ouver} onOpenChange={setOuver}>
+                                <PopoverTrigger asChild>
+                                    <Button className="w-full justify-between font-normal dark:text-neutral-400 text-neutral-600 hover:bg-neutral-100 bg-white border-2">
+                                        {selectedFields
+                                            ? fields
+                                                .find(c => c.id === selectedFields)?.name
+                                            : fieldsLoading
+                                                ? "Chargement des filiers..."
+                                                : "Sélectionner un filiers..."}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+
+                                <PopoverContent className="w-[450px] p-0 dark:bg-neutral-950">
+                                    <Command>
+                                        <CommandInput className="bg-white" placeholder="Search course..." />
+                                        <CommandEmpty>No Field found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {fields.map((field) => (
+                                                <CommandItem
+                                                    key={field.id}
+                                                    onSelect={() => selectField(field.id)}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            selectedFields === field.id ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {field.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </div>
                         <div>
                             <Label htmlFor="Total_des_Etudiants " className="text-sm dark:text-neutral-400 text-neutral-600">
                                 Total des Etudiants *
                             </Label>
                             <Input
-                                id="Total_des_Etudiants "
+                                id="number_student"
+                                name="number_student"
                                 type="number"
+                                value={form.number_student}
+                                onChange={handleInputChange}
+                                placeholder="Nombre d'étudiants"
                             />
                         </div>
                     </div>
@@ -93,7 +185,7 @@ export function FormGroup() {
                             <DialogClose asChild>
                                 <Button className="dark:hover:bg-neutral-100 dark:hover:text-neutral-950" variant="outline">Annuler</Button>
                             </DialogClose>
-                            <Button type="submit" className="bg-teal-700 dark:hover:text-neutral-950 dark:text-neutral-300">Enregistrer</Button>
+                            <Button onClick={handleSubmit} type="submit" className="bg-teal-700 dark:hover:text-neutral-950 dark:text-neutral-300">Enregistrer</Button>
                         </div>
                     </DialogFooter>
                 </DialogContent>

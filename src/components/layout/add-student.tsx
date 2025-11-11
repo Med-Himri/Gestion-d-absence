@@ -26,28 +26,55 @@ import {
     CommandInput,
     CommandItem,
 } from "@/components/ui/command"
-
-
-const groups = [
-    { value: "groupA", label: "Group A" },
-    { value: "groupB", label: "Group B" },
-    { value: "groupC", label: "Group C" },
-    { value: "groupD", label: "Group D" },
-    { value: "groupE", label: "Group E" },
-    { value: "groupF", label: "Group F" },
-]
+import { useGroupStore } from "@/store/groupe-store"
+import { useState, useEffect } from "react"
+import { useStudentStore } from "@/store/student-store";
 
 
 export function FormStudent() {
+    const { addStudent, fetchStudents } = useStudentStore();
     const [open, setOpen] = React.useState(false)
-    const [selected, setSelected] = React.useState<string[]>([])
+    const [selectedGroups, setSelectedGroups] = useState<string>("");
+    const { groups, fetchGroups, loading: fieldsLoading } = useGroupStore();
 
-    const toggleGroup = (value: string) => {
-        setSelected((prev) =>
-            prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-        )
-    }
+    const [form, setForm] = useState({
+        name: "",
+        massar_code: ""
+    });
 
+    useEffect(() => {
+        fetchGroups();
+    }, [fetchGroups]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const toggleGroup = (group_id: string) => {
+        setSelectedGroups(group_id);
+        setOpen(false)
+    };
+    const handleSave = async () => {
+        if (!form.name || !form.massar_code || selectedGroups.length === 0) {
+            alert("Please fill all fields and select at least one group.");
+            return;
+        }
+
+        try {
+            await addStudent({
+                name: form.name,
+                massar_code: form.massar_code,
+                group_ids: selectedGroups,
+            });
+            alert("Etudiant ajouté avec succès !");
+            setForm({ name: "", massar_code: "" });
+            setSelectedGroups("");
+            fetchStudents(); // refresh list
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors de l'ajout du Etudiant !");
+        }
+    };
     return (
         <div  >
             {/* Nouveau Client Dialog */}
@@ -73,7 +100,7 @@ export function FormStudent() {
                     </DialogHeader>
                     <div className="flex items-center gap-2  mb-1 mt-4">
                         <User className="w-5 h-5 text-blue-900" />
-                        <span className="text-sx text-neutral-950 font-medium dark:text-neutral-300">Informations du ensiegnant</span>
+                        <span className="text-sx text-neutral-950 font-medium dark:text-neutral-300">Informations du etudiant</span>
                     </div>
 
                     <div className="space-y-2">
@@ -84,63 +111,64 @@ export function FormStudent() {
                                     Nom Complet *
                                 </Label>
                                 <Input
-                                    id="lastName"
+                                    id="name"
+                                    name="name"
+                                    value={form.name}
+                                    onChange={handleInputChange}
+                                    placeholder="Nom du Complet"
                                 />
                             </div>
 
                         </div>
                         <div>
-                            <Label htmlFor="email" className="text-sm dark:text-neutral-400 text-neutral-600">
-                                Email *
+                            <Label htmlFor="Code" className="text-sm dark:text-neutral-400 text-neutral-600">
+                                Massar Code *
                             </Label>
                             <Input
-                                id="email"
-                                type="email"
+                                id="Code_massar"
+                                name="massar_code"
+                                value={form.massar_code}
+                                placeholder="Massar Number"
+                                type="Code_massar"
+                                onChange={handleInputChange}
                             />
                         </div>
                         <div>
-                            <Label htmlFor="Numero_de_piece" className="text-sm dark:text-neutral-400 text-neutral-600">
-                                Mot de passe *
+                            <Label className="text-sm font-semibold text-neutral-600">
+                                Groups *
                             </Label>
-                            <Input
-                                id="Numero_de_piece"
-                            />
-                        </div>
-                        <div>
                             <Popover open={open} onOpenChange={setOpen}>
                                 <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        aria-expanded={open}
-                                        className="w-[450px] justify-between"
-                                    >
-                                        {selected.length > 0
+                                    <Button className="w-full justify-between font-normal dark:text-neutral-400 text-neutral-600 hover:bg-neutral-100 bg-white border-2">
+                                        {selectedGroups.length > 0
                                             ? groups
-                                                .filter((g) => selected.includes(g.value))
-                                                .map((g) => g.label)
+                                                .filter((g) => selectedGroups.includes(g.id))
+                                                .map((g) => g.name)
                                                 .join(", ")
-                                            : "Select groups..."}
+                                            : fieldsLoading
+                                                ? "Chargement des groupes..."
+                                                : "Sélectionner des groupes..."}
                                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
+
                                 <PopoverContent className="w-[450px] p-0 dark:bg-neutral-950">
                                     <Command>
-                                        <CommandInput placeholder="Search group..." />
+                                        <CommandInput className="bg-white" placeholder="Search group..." />
                                         <CommandEmpty>No group found.</CommandEmpty>
                                         <CommandGroup>
                                             {groups.map((group) => (
                                                 <CommandItem
-                                                    key={group.value}
-                                                    onSelect={() => toggleGroup(group.value)}
+                                                    key={group.id}
+                                                    onSelect={() => toggleGroup(group.id)}
                                                 >
                                                     <Check
                                                         className={cn(
                                                             "mr-2 h-4 w-4",
-                                                            selected.includes(group.value) ? "opacity-100" : "opacity-0"
+                                                            selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
                                                         )}
                                                     />
-                                                    {group.label}
+                                                    {group.name}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -148,6 +176,7 @@ export function FormStudent() {
                                 </PopoverContent>
                             </Popover>
                         </div>
+
                     </div>
                     <hr />
                     <DialogFooter>
@@ -156,7 +185,7 @@ export function FormStudent() {
                             <DialogClose asChild>
                                 <Button className="dark:hover:bg-neutral-100 dark:hover:text-neutral-950" variant="outline">Annuler</Button>
                             </DialogClose>
-                            <Button type="submit" className="bg-teal-700 dark:hover:text-neutral-950 dark:text-neutral-300">Enregistrer</Button>
+                            <Button onClick={handleSave} type="submit" className="bg-teal-700 dark:hover:text-neutral-950 dark:text-neutral-300">Enregistrer</Button>
                         </div>
                     </DialogFooter>
                 </DialogContent>

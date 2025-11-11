@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { useGroupStore } from "@/store/groupe-store"
 import { useTeachersStore } from "@/store/teacher-store"
+import { useCoursesStore } from "@/store/course-store"
 import { cn } from "@/lib/utils"
 
 interface EditTeacherProps {
@@ -18,7 +19,9 @@ interface EditTeacherProps {
 
 export function EditTeacher({ teacher }: EditTeacherProps) {
   const [open, setOpen] = useState(false)
+  const [ouver, setOuver] = useState(false)
   const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+  const [selecteCourses, setSelectedCoures] = useState<string>("")
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -26,31 +29,39 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
   })
 
   const { groups, fetchGroups, loading } = useGroupStore()
+  const { courses, fetchCourses } = useCoursesStore()
   const { updateTeacher } = useTeachersStore()
-
   // 🧩 Fetch groups once
   useEffect(() => {
-    fetchGroups()
-  }, [fetchGroups])
+    fetchGroups(), fetchCourses()
+  }, [fetchGroups, fetchCourses])
 
-  // 🧩 Pre-fill teacher data
+
+
+  // 🧩 Pre-fill selected course
   useEffect(() => {
     if (teacher) {
       setForm({
         name: teacher.name,
         email: teacher.email,
         password: "",
-      })
+      });
 
-      // If teacher already has groups
-      if (teacher.group && Array.isArray(teacher.group)) {
+      // 🧩 Pre-fill selected course
+      if (teacher.course_id) {
+        setSelectedCoures(teacher.course_id);
+      }
+
+      // 🧩 Pre-fill selected groups
+      if (Array.isArray(teacher.group)) {
         const matched = groups
           .filter((g) => teacher.group.includes(g.name))
-          .map((g) => g.id)
-        setSelectedGroups(matched)
+          .map((g) => g.id);
+        setSelectedGroups(matched);
       }
     }
-  }, [teacher, groups])
+  }, [teacher, groups]);
+
 
   // 🧩 Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +76,10 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
         : [...prev, group_id]
     )
   }
+  const toggleCourse = (course_id: string) => {
+    setSelectedCoures(course_id)
+    setOpen(false)
+  }
 
   // 💾 Save changes
   const handleSave = async () => {
@@ -73,8 +88,7 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
         name: form.name,
         email: form.email,
         password: form.password,
-        course: "", // optional
-        course_id: teacher.course_id ?? "",
+        course_id: selecteCourses,
         group_ids: selectedGroups,
       })
       //alert("✅ Teacher updated successfully!")
@@ -125,6 +139,55 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
             />
           </div>
 
+          <div>
+            <Label className="text-sm font-semibold text-neutral-600">
+              Matiere
+            </Label>
+            <Popover open={ouver} onOpenChange={setOuver}>
+              <PopoverTrigger asChild>
+                <Button className="w-full justify-between font-normal dark:text-neutral-400 text-neutral-600 hover:bg-neutral-100 bg-white border-2">
+                  {selecteCourses
+                    ? courses
+                      .filter((c) => c.course_id === selecteCourses) // ✅ compare id
+                      .map((c) => c.course_name)
+                      .join(",")
+                    : loading
+                      ? "Chargement des courses..."
+                      : "Sélectionner des courses..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+
+              <PopoverContent className="w-[450px] p-0 dark:bg-neutral-950">
+                <Command>
+                  <CommandInput
+                    className="bg-white"
+                    placeholder="Search group..."
+                  />
+                  <CommandEmpty>No course found.</CommandEmpty>
+                  <CommandGroup>
+                    {courses.map((course) => (
+                      <CommandItem
+                        key={course.course_id}
+                        onSelect={() => toggleCourse(course.course_id)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selecteCourses.includes(course.course_id)
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        {course.course_name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* 🏫 Groups */}
           <div>
             <Label className="text-sm font-semibold text-neutral-600">
@@ -135,12 +198,12 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
                 <Button className="w-full justify-between font-normal dark:text-neutral-400 text-neutral-600 hover:bg-neutral-100 bg-white border-2">
                   {selectedGroups.length > 0
                     ? groups
-                        .filter((g) => selectedGroups.includes(g.id))
-                        .map((g) => g.name)
-                        .join(", ")
+                      .filter((g) => selectedGroups.includes(g.id))
+                      .map((g) => g.name)
+                      .join(", ")
                     : loading
-                    ? "Chargement des groupes..."
-                    : "Sélectionner des groupes..."}
+                      ? "Chargement des groupes..."
+                      : "Sélectionner des groupes..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>

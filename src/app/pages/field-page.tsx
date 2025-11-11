@@ -1,16 +1,24 @@
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Search,
 } from "lucide-react"
-import fields from "@/data/field-info.json"
 import {FormField} from "@/components/layout/add-fieled"
+import { useFieldStore } from "@/store/field-store"
+import { EditField } from "@/components/layout/edit-field"
 
 export default function FieldPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const {fields, loading, fetchFields,deleteField } = useFieldStore()
+
+  useEffect(() => {
+    fetchFields()
+  }, [fetchFields])
+
+    if (loading) return <p>Loading...</p>
   return (
     <main className="flex  p-4 h-full">
       <div className=" w-full relative">
@@ -42,6 +50,7 @@ export default function FieldPage() {
                 <TableHeader>
                   <TableRow className="bg-neutral-50 dark:text-neutral-300 dark:bg-neutral-700">
                     <TableHead className="font-medium  dark:text-neutral-300 text-neutral-700">Field Name</TableHead>
+                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Groups</TableHead>
                     <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Number of Groups</TableHead>
                     <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Actions</TableHead>
                   </TableRow>
@@ -50,17 +59,13 @@ export default function FieldPage() {
                   {fields.map((field) => (
                     <TableRow key={field.id} >
                       <TableCell className="font-medium dark:text-neutral-400  text-neutral-900">{field.name}</TableCell>
-                      <TableCell className="text-neutral-700 dark:text-neutral-400">{field.numberOfGroups}</TableCell>
+                      <TableCell className="text-neutral-700 dark:text-neutral-400">{field.groups?.map((g) => g.name).join(", ") || "-"}</TableCell>
+                      <TableCell className="text-neutral-700 dark:text-neutral-400">{field.groups?.length || 0}</TableCell>
                       <TableCell className="text-neutral-700">
-                        <button
-                          onClick={() => console.log("Modifier:",)}
-                          className="px-3 py-1 dark:text-blue-400 text-blue-600"
-                        >
-                          Edit
-                        </button>
+                         <EditField field={field} />
 
                         <button
-                          onClick={() => console.log("Suprime:",)}
+                          onClick={() => deleteField(field.id)}
                           className="px-3 py-1 dark:text-red-400 text-red-600"
                         >
                           Delete

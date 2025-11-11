@@ -1,16 +1,24 @@
 
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Search,
 } from "lucide-react"
-import students from "@/data/student-list.json"
 import {FormStudent} from "@/components/layout/add-student"
+import { useStudentStore } from "@/store/student-store"
+import { EditStudent } from "@/components/layout/edit-student"
 
 export default function StudentPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const {students, loading, fetchStudents, deleteStudent } = useStudentStore()
+  
+  useEffect(() => {
+    fetchStudents() 
+  }, [fetchStudents])
+  
+    if (loading) return <p>Loading...</p>
   return (
     <main className="flex  p-4 h-full">
       <div className=" w-full relative">
@@ -43,29 +51,19 @@ export default function StudentPage() {
                   <TableRow className="bg-neutral-50 dark:text-neutral-300 dark:bg-neutral-700">
                     <TableHead className="font-medium  dark:text-neutral-300 text-neutral-700">Name</TableHead>
                     <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Massar Number</TableHead>
-                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Group</TableHead>
-                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Filed</TableHead>
-                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Actions</TableHead>
+                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Group</TableHead>                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {students.map((student) => (
                     <TableRow key={student.id} >
                       <TableCell className="font-medium dark:text-neutral-400  text-neutral-900">{student.name}</TableCell>
-                      <TableCell className="text-neutral-700 dark:text-neutral-400">{student.massarNumber}</TableCell>
-                      <TableCell className="text-neutral-700 dark:text-neutral-400">{student.group}</TableCell>
-                      <TableCell className="text-neutral-700 dark:text-neutral-400">filed</TableCell>
-                     
+                      <TableCell className="text-neutral-700 dark:text-neutral-400">{student.massar_code}</TableCell>
+                      <TableCell className="text-neutral-700 dark:text-neutral-400">{student.group?.name || "-"}</TableCell>                     
                       <TableCell className="text-neutral-700">
+                        <EditStudent student={student} />
                         <button
-                          onClick={() => console.log("Modifier:",)}
-                          className="px-3 py-1 dark:text-blue-400 text-blue-600"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() => console.log("Suprime:",)}
+                          onClick={() => deleteStudent(student.id)}
                           className="px-3 py-1 dark:text-red-400 text-red-600"
                         >
                           Delete

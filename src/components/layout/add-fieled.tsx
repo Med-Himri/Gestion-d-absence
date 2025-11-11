@@ -7,16 +7,56 @@ import {
     DialogHeader,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, BookOpen } from "lucide-react";
+import { Plus, BookOpen, ChevronsUpDown, Check } from "lucide-react";
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "../ui/button";
-
-
+import { useGroupStore } from "@/store/groupe-store"
+import { useState, useEffect } from "react"
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "../ui/command";
+import * as React from "react"
+import { cn } from "@/lib/utils";
+import { useFieldStore } from "@/store/field-store";
 
 export function FormField() {
+    const [open, setOpen] = React.useState(false)
+    const [name, setName] = useState("");
+    const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+    const { groups, fetchGroups, loading } = useGroupStore();
 
+    const addField = useFieldStore((state) => state.addField);
 
+    useEffect(() => {
+        fetchGroups();
+    }, [fetchGroups]);
+
+    const toggleGroup = (group_id: string) => {
+        setSelectedGroups((prev) =>
+            prev.includes(group_id) ? prev.filter((id) => id !== group_id) : [...prev, group_id]
+        );
+    };
+    const handleSubmit = async () => {
+        if (!name) {
+            alert("Veuillez remplir tous les champs obligatoires");
+            return;
+        }
+
+        try {
+            await addField({
+                name,
+                group_ids: selectedGroups
+            });
+            alert("Filiére ajouté avec succès !");
+            setName("");
+            setSelectedGroups([]);
+            setOpen(false);
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors de l'ajout de la filiére.");
+        }
+
+    };
     return (
         <div  >
             {/* Nouveau Client Dialog */}
@@ -52,21 +92,56 @@ export function FormField() {
                                 Nom de Filiére *
                             </Label>
                             <Input
-                                id="lastName"
+                                id="name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Nom Filiére"
                             />
                         </div>
 
                     </div>
                     <div>
-                        <div>
-                            <Label htmlFor="Total_des_Etudiants " className="text-sm dark:text-neutral-400 text-neutral-600">
-                                Total des Groupes *
-                            </Label>
-                            <Input
-                                id="Total_des_Etudiants "
-                                type="number"
-                            />
-                        </div>
+                        <Label className="text-sm font-semibold text-neutral-600">
+                            Groups *
+                        </Label>
+                        <Popover open={open} onOpenChange={setOpen}>
+                            <PopoverTrigger asChild>
+                                <Button className="w-full justify-between font-normal dark:text-neutral-400 text-neutral-600 hover:bg-neutral-100 bg-white border-2">
+                                    {selectedGroups.length > 0
+                                        ? groups
+                                            .filter((g) => selectedGroups.includes(g.id))
+                                            .map((g) => g.name)
+                                            .join(", ")
+                                        : loading
+                                            ? "Chargement des groupes..."
+                                            : "Sélectionner des groupes..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+
+                            <PopoverContent className="w-[450px] p-0 dark:bg-neutral-950">
+                                <Command>
+                                    <CommandInput className="bg-white" placeholder="Search group..." />
+                                    <CommandEmpty>No group found.</CommandEmpty>
+                                    <CommandGroup>
+                                        {groups.map((group) => (
+                                            <CommandItem
+                                                key={group.id}
+                                                onSelect={() => toggleGroup(group.id)}
+                                            >
+                                                <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        selectedGroups.includes(group.id) ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                {group.name}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                     <hr />
                     <DialogFooter>
@@ -75,7 +150,7 @@ export function FormField() {
                             <DialogClose asChild>
                                 <Button className="dark:hover:bg-neutral-100 dark:hover:text-neutral-950" variant="outline">Annuler</Button>
                             </DialogClose>
-                            <Button type="submit" className="bg-teal-700 dark:hover:text-neutral-950 dark:text-neutral-300">Enregistrer</Button>
+                            <Button onClick={handleSubmit} type="submit" className="bg-teal-700 dark:hover:text-neutral-950 dark:text-neutral-300">Enregistrer</Button>
                         </div>
                     </DialogFooter>
                 </DialogContent>

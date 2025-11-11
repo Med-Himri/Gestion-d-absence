@@ -7,16 +7,15 @@ export interface Teacher {
     name: string
     email: string
     role: string
-    course_name: string
-    group: string[]
-    password?: string
+    course_name: string | null;
+    group: string[];
 }
 
 export interface TeacherInput {
+    new_group_name: any
     name: string
     email: string
     password: string
-    course: string
     course_id: string          // optional course assigned
     group_ids: string[]        // optional groups assigned
 }
@@ -27,8 +26,11 @@ interface TeacherState {
     error: PostgrestError | null
     fetchTeachers: () => Promise<void>
     addTeacher: (input: TeacherInput) => Promise<void>
-    updateTeacher: (user_id: string, input: TeacherInput) => Promise<void>
-    deleteTeacher: (user_id: string) => Promise<void>
+    updateTeacher: (
+        teacher_id: string,
+        updates: TeacherInput
+    ) => Promise<void>;
+    deleteTeacher: (teacher_id: string) => Promise<void>
 }
 
 export const useTeachersStore = create<TeacherState>((set) => ({
@@ -37,53 +39,54 @@ export const useTeachersStore = create<TeacherState>((set) => ({
     error: null,
 
     fetchTeachers: async () => {
-        set({ loading: true, error: null })
+        set({ loading: true, error: null });
+
         const { data, error } = await supabase
-            .from('teacher')
+            .from("teacher")
             .select(`
-    user_id,
-    user(
-      name,
-      email,
-      role
-    ),
-    course:course_teacher_id_fkey (
-      id,
-      name,
-      group_course (
-        group:group_id (
-          id,
-          name,
-          year
+      user_id,
+      user:user_id (
+        id,
+        name,
+        email,
+        role
+      ),
+      course:course_id (
+        id,
+        name,
+        group_course (
+          group:group_id (
+            id,
+            name,
+            year
+          )
         )
       )
-    )
-  `)
+    `);
+
         if (error) {
-            set({ error, loading: false })
-            console.error('Error fetching teachers:', error)
-            return
+            console.error("❌ Error fetching teachers:", error);
+            set({ error, loading: false });
+            return;
         }
 
-        // Flatten the nested user data
-        const formatted = data.map((t: any) => ({
+        // ✅ Flatten data for easier frontend use
+        const formatted: Teacher[] = (data ?? []).map((t: any) => ({
             user_id: t.user_id,
-            name: t.user?.name ?? '',
-            email: t.user?.email ?? '',
-            role: t.user?.role ?? '',
-            course_name: t.course?.map((c: any) => c.name) ?? [],
-            group: t.course
-                ?.flatMap((c: any) =>
-                    c.group_course?.map((gc: any) => gc.group?.name)
-                )
-                .filter(Boolean) ?? [],
-        }))
+            name: t.user?.name ?? "",
+            email: t.user?.email ?? "",
+            role: t.user?.role ?? "",
+            course_name: t.course?.name ?? "",
+            group:
+                t.course?.group_course?.map((gc: any) => gc.group?.name).filter(Boolean) ??
+                [],
+        }));
 
-        set({ teachers: formatted, loading: false })
+        set({ teachers: formatted, loading: false });
     },
 
     addTeacher: async (input: TeacherInput) => {
-        set({ loading: true, error: null })
+        set({ loading: true, error: null });
 
         try {
             // 1️⃣ Create user
@@ -96,165 +99,149 @@ export const useTeachersStore = create<TeacherState>((set) => ({
                     role: 'teacher'
                 }])
                 .select('id')
-                .single()
-            if (userError) throw userError
-            const user_id = userData.id
-
-            // 2️⃣ Create teacher
-            const { data: teacherData, error: teacherError } = await supabase
-                .from('teacher')
-                .insert([{ user_id }])
-                .select('user_id')
-                .single()
-            if (teacherError) throw teacherError
-            const teacher_id = teacherData.user_id
-
-            // 3️⃣ Create course (or assign existing course)
-            let course_id = input.course_id
-            if (!course_id) {
-                const { data: courseData, error: courseError } = await supabase
-                    .from('course')
-                    .insert([{ name: 'Default Course', hour: '00:00', teacher_id }])
-                    .select('id')
-                    .single()
-                if (courseError) throw courseError
-                course_id = courseData.id
-            } else {
-                // Update course to assign teacher
-                const { error: courseError } = await supabase
-                    .from('course')
-                    .update({ teacher_id })
-                    .eq('id', course_id)
-                if (courseError) throw courseError
-            }
-
-            // 4️⃣ Assign selected groups to the course
-            if (input.group_ids && input.group_ids.length > 0) {
-                const groupCourseRows = input.group_ids.map(group_id => ({
-                    course_id,
-                    group_id
-                }))
-                const { error: gcError } = await supabase
-                    .from('group_course')
-                    .insert(groupCourseRows)
-                if (gcError) throw gcError
-            }
-
-            // 5️⃣ Refresh UI
-            await useTeachersStore.getState().fetchTeachers()
-
-        } catch (err: any) {
-            console.error('Error adding teacher:', err)
-            set({ error: err, loading: false })
-            return
-        }
-
-        set({ loading: false })
-    },
-deleteTeacher: async (user_id: string) => {
-    set({ loading: true, error: null });
-    try {
-        // 1️⃣ Find courses for that teacher
-        const { data: courses, error: cErr } = await supabase
-            .from("course")
-            .select("id")
-            .eq("teacher_id", user_id);
-        if (cErr) throw cErr;
-
-        // 2️⃣ Remove linked group_course rows
-        if (courses?.length) {
-            const courseIds = courses.map((c) => c.id);
-            const { error: gcErr } = await supabase
-                .from("group_course")
-                .delete()
-                .in("course_id", courseIds);
-            if (gcErr) throw gcErr;
-        }
-
-        // 3️⃣ Delete courses
-        const { error: courseDelErr } = await supabase
-            .from("course")
-            .delete()
-            .eq("teacher_id", user_id);
-        if (courseDelErr) throw courseDelErr;
-
-        // 4️⃣ Delete teacher
-        const { error: teacherDelErr } = await supabase
-            .from("teacher")
-            .delete()
-            .eq("user_id", user_id);
-        if (teacherDelErr) throw teacherDelErr;
-
-        // 5️⃣ Delete user
-        const { error: userDelErr } = await supabase
-            .from("user")
-            .delete()
-            .eq("id", user_id);
-        if (userDelErr) throw userDelErr;
-
-        // 6️⃣ Refresh teacher list
-        await useTeachersStore.getState().fetchTeachers();
-
-    } catch (err: any) {
-        console.error("Error deleting teacher:", err);
-        set({ error: err, loading: false });
-        return;
-    }
-
-    set({ loading: false });
-},
-
-    // updateTeacher inside teacher-store
-    updateTeacher: async (teacher_id: string, updates: { name?: string; email?: string; group_ids?: string[] }) => {
-        set({ loading: true, error: null });
-
-        try {
-            // 1️⃣ Update user info
-            const { error: userError } = await supabase
-                .from('user')
-                .update({ name: updates.name, email: updates.email })
-                .eq('id', teacher_id);
+                .single();
             if (userError) throw userError;
+            const user_id = userData.id;
 
-            // 2️⃣ Find teacher’s course
-            const { data: courses, error: courseError } = await supabase
-                .from('course')
-                .select('id')
-                .eq('teacher_id', teacher_id);
-            if (courseError) throw courseError;
+            // 2️⃣ Create teacher (link directly to course)
+            const { error: teacherError } = await supabase
+                .from('teacher')
+                .insert([{
+                    user_id,
+                    course_id: input.course_id || null
+                }]);
+            if (teacherError) throw teacherError;
 
-            if (courses.length > 0 && updates.group_ids?.length) {
-                const course_id = courses[0].id;
-
-                // 3️⃣ Clear existing links
-                await supabase.from('group_course').delete().eq('course_id', course_id);
-
-                // 4️⃣ Insert new ones
-                const newLinks = updates.group_ids.map(group_id => ({
-                    course_id,
+            // 3️⃣ Assign selected groups to the course
+            if (input.group_ids && input.group_ids.length > 0 && input.course_id) {
+                const groupCourseRows = input.group_ids.map(group_id => ({
+                    course_id: input.course_id,
                     group_id
                 }));
-                const { error: insertError } = await supabase.from('group_course').insert(newLinks);
-                if (insertError) throw insertError;
+                const { error: gcError } = await supabase
+                    .from('group_course')
+                    .insert(groupCourseRows);
+                if (gcError) throw gcError;
             }
 
-            // 5️⃣ Refresh
+            // 4️⃣ Refresh
             await useTeachersStore.getState().fetchTeachers();
 
         } catch (err: any) {
-            console.error("Error updating teacher:", err);
+            console.error('Error adding teacher:', err);
             set({ error: err, loading: false });
             return;
         }
 
         set({ loading: false });
-    }
+    },
+
+    // ✅ UPDATE TEACHER
+    updateTeacher: async (teacher_id, updates) => {
+        set({ loading: true, error: null });
+
+        try {
+            // 1️⃣ Update teacher’s course
+            const { error: teacherError } = await supabase
+                .from("teacher")
+                .update({ course_id: updates.course_id })
+                .eq("user_id", teacher_id);
+            if (teacherError) throw teacherError;
+
+            // 2️⃣ Update user info
+            const { error: userError } = await supabase
+                .from("user")
+                .update({
+                    name: updates.name,
+                    email: updates.email,
+                })
+                .eq("id", teacher_id);
+            if (userError) throw userError;
+
+            // 3️⃣ Get teacher’s course_id (for safety)
+            const { data: teacherData, error: fetchTeacherError } = await supabase
+                .from("teacher")
+                .select("course_id")
+                .eq("user_id", teacher_id)
+                .single();
+            if (fetchTeacherError) throw fetchTeacherError;
+
+            const course_id = teacherData?.course_id;
+            if (!course_id) throw new Error("Teacher has no assigned course.");
+
+            // 4️⃣ Update group_course links (delete old + insert new)
+            await supabase.from("group_course").delete().eq("course_id", course_id);
+
+            if (updates.group_ids && updates.group_ids.length > 0) {
+                const newLinks = updates.group_ids.map((group_id) => ({
+                    course_id,
+                    group_id,
+                }));
+                const { error: gcError } = await supabase
+                    .from("group_course")
+                    .insert(newLinks);
+                if (gcError) throw gcError;
+            }
+
+            // 5️⃣ 🆕 Update group names linked to this teacher (like your SQL)
+            if (updates.new_group_name) {
+                // Find all group_ids related to teacher’s course
+                const { data: groupCourses, error: groupFetchError } = await supabase
+                    .from("group_course")
+                    .select("group_id")
+                    .eq("course_id", course_id);
+                if (groupFetchError) throw groupFetchError;
+
+                const groupIds = groupCourses.map((gc) => gc.group_id);
+
+                // Update each group name one by one (Supabase doesn't support multi-join update)
+                for (const group_id of groupIds) {
+                    const { error: groupUpdateError } = await supabase
+                        .from("group")
+                        .update({ name: updates.new_group_name })
+                        .eq("id", group_id);
+                    if (groupUpdateError) throw groupUpdateError;
+                }
+            }
+
+            // ✅ Refresh teacher data in the store
+            await useTeachersStore.getState().fetchTeachers();
+        } catch (err: any) {
+            console.error("❌ Error updating teacher:", err);
+            set({ error: err, loading: false });
+            return;
+        }
+
+        set({ loading: false });
+    },
 
 
+    deleteTeacher: async (teacher_id) => {
+        set({ loading: true, error: null });
+        try {
+            // 1️⃣ Remove teacher (auto cascade via foreign key)
+            const { error: teacherErr } = await supabase
+                .from("teacher")
+                .delete()
+                .eq("user_id", teacher_id);
+            if (teacherErr) throw teacherErr;
 
+            // 2️⃣ Delete the user itself
+            const { error: userErr } = await supabase
+                .from("user")
+                .delete()
+                .eq("id", teacher_id);
+            if (userErr) throw userErr;
 
+            await useTeachersStore.getState().fetchTeachers();
+        } catch (err: any) {
+            console.error("❌ Error deleting teacher:", err);
+            set({ error: err, loading: false });
+            return;
+        }
 
-
+        set({ loading: false });
+    },
 
 }))
 

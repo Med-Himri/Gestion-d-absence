@@ -1,16 +1,26 @@
 
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Search,
 } from "lucide-react"
-import groups from "@/data/groups.json"
 import {FormGroup} from "@/components/layout/add-group"
+import {useGroupStore} from "@/store/groupe-store"
+import { EditGroup } from "@/components/layout/edit-group"
+
 
 export default function GroupsPage() {
+
   const [searchQuery, setSearchQuery] = useState("")
+  const {groups, loading, fetchGroups, deleteGroup } = useGroupStore()
+   useEffect(() => {
+      fetchGroups()
+    }, [fetchGroups])
+  
+      if (loading) return <p>Loading...</p>
+
   return (
     <main className="flex  p-4 h-full">
       <div className=" w-full relative">
@@ -51,20 +61,15 @@ export default function GroupsPage() {
                 <TableBody>
                   {groups.map((group) => (
                     <TableRow key={group.id} >
-                      <TableCell className="font-medium dark:text-neutral-400  text-neutral-900">{group.groupName}</TableCell>
+                      <TableCell className="font-medium dark:text-neutral-400  text-neutral-900">{group.name}</TableCell>
                       <TableCell className="text-neutral-700 dark:text-neutral-400">{group.year}</TableCell>
-                      <TableCell className="text-neutral-700 dark:text-neutral-400">{group.field}</TableCell>
-                      <TableCell className="text-neutral-700 dark:text-neutral-400">{group.numberOfStudents}</TableCell>
+                      <TableCell className="text-neutral-700 dark:text-neutral-400">{group.field ? group.field.name : "-"}</TableCell>
+                      <TableCell className="text-neutral-700 dark:text-neutral-400">{group.number_student}</TableCell>
                       <TableCell className="text-neutral-700">
-                        <button
-                          onClick={() => console.log("Modifier:",)}
-                          className="px-3 py-1 dark:text-blue-400 text-blue-600"
-                        >
-                          Edit
-                        </button>
+                       < EditGroup group={group} />
 
                         <button
-                          onClick={() => console.log("Suprime:",)}
+                          onClick={() => deleteGroup(group.id)}
                           className="px-3 py-1 dark:text-red-400 text-red-600"
                         >
                           Delete
