@@ -63,6 +63,7 @@ export const useStudentStore = create<StudentState>((set) => ({
 
     set({ students: data as any[], loading: false });
   },
+  
   addStudent: async ({ name, massar_code, group_ids }) => {
     set({ loading: true, error: null });
 

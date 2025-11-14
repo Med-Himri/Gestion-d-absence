@@ -1,4 +1,4 @@
-import AppLayout from "@/components/layout/app-layout"
+import {AppLayout} from "@/components/layout/app-layout"
 import { appRoutes } from "@/routes"
 import { Route, Routes } from "react-router-dom"
 import LoginPage from "@/app/auth/login-page"

@@ -8,7 +8,8 @@ import {
     Home,
     BookOpen,
     BookOpenText,
-    Users
+    Users,
+    FileText
 } from "lucide-react";
 import { Button } from "../ui/button";
 
@@ -26,6 +27,7 @@ const sidebarItems: SidebarItem[] = [
     { icon: Users, label: "Student", href: "/students" },
     { icon: Layers, label: "Groups", href: "/groups" },
     { icon: BookOpen, label: "Field", href: "/field" },
+    { icon: FileText, label: "Rapports", href: "/reports",  }
     
 
 ];

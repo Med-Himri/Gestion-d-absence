@@ -4,6 +4,7 @@ import GroupsPage from "@/app/pages/groups-page"
 import FieldPage from "@/app/pages/field-page"
 import StudentPage from "@/app/pages/student-page"
 import CoursePage from "@/app/pages/course-page"
+import AdminReportsPage from "@/app/pages/reports-page"
 export const appRoutes = [
     {
         path: "/",
@@ -29,6 +30,12 @@ export const appRoutes = [
         path: "/course",
         component: <CoursePage />,
     },
+     {
+        path: "/reports",
+        component: <AdminReportsPage />,
+    },
+   
    
 
 ] 
+
