@@ -12,7 +12,7 @@ import { EditCourse } from "@/components/layout/edit-coure"
 
 export default function CoursePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const {courses, loading, fetchCourses,deleteCourse } = useCoursesStore()
+  const { courses, loading, fetchCourses } = useCoursesStore()
 
   useEffect(() => {
     fetchCourses()
@@ -51,18 +51,20 @@ export default function CoursePage() {
                 <TableHeader>
                   <TableRow className="bg-neutral-50 dark:text-neutral-300 dark:bg-neutral-700">
                     <TableHead className="font-medium  dark:text-neutral-300 text-neutral-700">Course Name</TableHead>
+                    <TableHead className="font-medium  dark:text-neutral-300 text-neutral-700">Teacher</TableHead>
                     <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {courses.map((course, id) => (
                     <TableRow key={id} >
-                      <TableCell className="font-medium dark:text-neutral-400  text-neutral-900">{course.course_name}</TableCell>
+                      <TableCell className="font-medium dark:text-neutral-400  text-neutral-900">{course.name}</TableCell>
+                      <TableCell className="font-medium dark:text-neutral-400  text-neutral-900"> {course.teachers.length > 0 ? course.teachers.join(', '): '-'}</TableCell>
                       <TableCell className="text-neutral-700">
-                       <EditCourse course={course} />
+                        <EditCourse course={course} />
 
                         <button
-                          onClick={() => deleteCourse(course.course_id)}
+                          onClick={() => {}}
                           className="px-3 py-1 dark:text-red-400 text-red-600"
                         >
                           Delete

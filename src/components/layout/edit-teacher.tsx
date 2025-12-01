@@ -4,64 +4,64 @@ import { useState, useEffect } from "react"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Save, ChevronsUpDown, Check, UserCheck } from "lucide-react"
+import { Save, UserCheck, Check, ChevronsUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { useGroupStore } from "@/store/groupe-store"
+import { useCoursesStore } from "@/store/course-store"  // Added for courses
 import { useTeachersStore } from "@/store/teacher-store"
-import { useCoursesStore } from "@/store/course-store"
 import { cn } from "@/lib/utils"
 
 interface EditTeacherProps {
-  teacher: any // You can replace this with your Teacher type if you want
+  teacher: any
 }
 
 export function EditTeacher({ teacher }: EditTeacherProps) {
-  const [open, setOpen] = useState(false)
-  const [ouver, setOuver] = useState(false)
+  const [openGroups, setOpenGroups] = useState(false)
+  const [openCourses, setOpenCourses] = useState(false)  // Added for courses popover
   const [selectedGroups, setSelectedGroups] = useState<string[]>([])
-  const [selecteCourses, setSelectedCoures] = useState<string>("")
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([])  // Added for courses
   const [form, setForm] = useState({
     name: "",
     email: "",
-    password: "",
   })
 
-  const { groups, fetchGroups, loading } = useGroupStore()
-  const { courses, fetchCourses } = useCoursesStore()
+  const { groups, fetchGroups, loading: loadingGroups } = useGroupStore()
+  const { courses, fetchCourses, loading: loadingCourses } = useCoursesStore()  // Added
   const { updateTeacher } = useTeachersStore()
-  // 🧩 Fetch groups once
+
+  // 🧩 Fetch groups and courses once
   useEffect(() => {
-    fetchGroups(), fetchCourses()
+    fetchGroups()
+    fetchCourses()  // Added
   }, [fetchGroups, fetchCourses])
 
-
-
-  // 🧩 Pre-fill selected course
+  // 🧩 Pre-fill form, groups, and courses
   useEffect(() => {
     if (teacher) {
       setForm({
         name: teacher.name,
         email: teacher.email,
-        password: "",
-      });
+      })
 
-      // 🧩 Pre-fill selected course
-      if (teacher.course_id) {
-        setSelectedCoures(teacher.course_id);
+      // Pre-fill groups
+      if (Array.isArray(teacher.groups)) {
+        const matchedGroups = groups
+          .filter((g) => teacher.groups.includes(g.name))
+          .map((g) => g.id)
+        setSelectedGroups(matchedGroups)
       }
 
-      // 🧩 Pre-fill selected groups
-      if (Array.isArray(teacher.group)) {
-        const matched = groups
-          .filter((g) => teacher.group.includes(g.name))
-          .map((g) => g.id);
-        setSelectedGroups(matched);
+      // Pre-fill courses
+      if (Array.isArray(teacher.course_names)) {
+        const matchedCourses = courses
+          .filter((c) => teacher.course_names.includes(c.name))
+          .map((c) => c.id)
+        setSelectedCourses(matchedCourses)
       }
     }
-  }, [teacher, groups]);
-
+  }, [teacher, groups, courses])
 
   // 🧩 Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,9 +76,14 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
         : [...prev, group_id]
     )
   }
+
+  // 🧩 Toggle course selection
   const toggleCourse = (course_id: string) => {
-    setSelectedCoures(course_id)
-    setOpen(false)
+    setSelectedCourses((prev) =>
+      prev.includes(course_id)
+        ? prev.filter((id) => id !== course_id)
+        : [...prev, course_id]
+    )
   }
 
   // 💾 Save changes
@@ -87,11 +92,10 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
       await updateTeacher(teacher.user_id, {
         name: form.name,
         email: form.email,
-        password: form.password,
-        course_id: selecteCourses,
+        course_ids: selectedCourses,  // Updated to pass course IDs
         group_ids: selectedGroups,
       })
-      //alert("✅ Teacher updated successfully!")
+      alert("✅ Teacher updated successfully!")
     } catch (err) {
       console.error("Error updating teacher:", err)
       alert("❌ Failed to update teacher")
@@ -139,47 +143,43 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
             />
           </div>
 
+          {/* 🏫 Courses (multi-select) */}
           <div>
-            <Label className="text-sm font-semibold text-neutral-600">
-              Matiere
-            </Label>
-            <Popover open={ouver} onOpenChange={setOuver}>
+            <Label className="text-sm font-semibold text-neutral-600">Courses taught</Label>
+            <Popover open={openCourses} onOpenChange={setOpenCourses}>
               <PopoverTrigger asChild>
                 <Button className="w-full justify-between font-normal dark:text-neutral-400 text-neutral-600 hover:bg-neutral-100 bg-white border-2">
-                  {selecteCourses
+                  {selectedCourses.length > 0
                     ? courses
-                      .filter((c) => c.course_id === selecteCourses) // ✅ compare id
-                      .map((c) => c.course_name)
-                      .join(",")
-                    : loading
-                      ? "Chargement des courses..."
-                      : "Sélectionner des courses..."}
+                        .filter((c) => selectedCourses.includes(c.id))
+                        .map((c) => c.name)
+                        .join(", ")
+                    : loadingCourses
+                    ? "Chargement des cours..."
+                    : "Sélectionner des cours..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
 
               <PopoverContent className="w-[450px] p-0 dark:bg-neutral-950">
                 <Command>
-                  <CommandInput
-                    className="bg-white"
-                    placeholder="Search group..."
-                  />
+                  <CommandInput className="bg-white" placeholder="Search course..." />
                   <CommandEmpty>No course found.</CommandEmpty>
                   <CommandGroup>
                     {courses.map((course) => (
                       <CommandItem
-                        key={course.course_id}
-                        onSelect={() => toggleCourse(course.course_id)}
+                        key={course.id}
+                        onSelect={() => toggleCourse(course.id)}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            selecteCourses.includes(course.course_id)
+                            selectedCourses.includes(course.id)
                               ? "opacity-100"
                               : "opacity-0"
                           )}
                         />
-                        {course.course_name}
+                        {course.name}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -190,30 +190,25 @@ export function EditTeacher({ teacher }: EditTeacherProps) {
 
           {/* 🏫 Groups */}
           <div>
-            <Label className="text-sm font-semibold text-neutral-600">
-              Groups assigned
-            </Label>
-            <Popover open={open} onOpenChange={setOpen}>
+            <Label className="text-sm font-semibold text-neutral-600">Groups assigned</Label>
+            <Popover open={openGroups} onOpenChange={setOpenGroups}>
               <PopoverTrigger asChild>
                 <Button className="w-full justify-between font-normal dark:text-neutral-400 text-neutral-600 hover:bg-neutral-100 bg-white border-2">
                   {selectedGroups.length > 0
                     ? groups
-                      .filter((g) => selectedGroups.includes(g.id))
-                      .map((g) => g.name)
-                      .join(", ")
-                    : loading
-                      ? "Chargement des groupes..."
-                      : "Sélectionner des groupes..."}
+                        .filter((g) => selectedGroups.includes(g.id))
+                        .map((g) => g.name)
+                        .join(", ")
+                    : loadingGroups
+                    ? "Chargement des groupes..."
+                    : "Sélectionner des groupes..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
 
               <PopoverContent className="w-[450px] p-0 dark:bg-neutral-950">
                 <Command>
-                  <CommandInput
-                    className="bg-white"
-                    placeholder="Search group..."
-                  />
+                  <CommandInput className="bg-white" placeholder="Search group..." />
                   <CommandEmpty>No group found.</CommandEmpty>
                   <CommandGroup>
                     {groups.map((group) => (

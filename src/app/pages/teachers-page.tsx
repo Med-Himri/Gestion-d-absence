@@ -12,12 +12,8 @@ import { EditTeacher } from "@/components/layout/edit-teacher"
 
 export default function TeachersPage() {
 
-  // const [searchTerm, setSearchTerm] = useState("");
-  const { teachers, loading, fetchTeachers, deleteTeacher } = useTeachersStore()
-
-  useEffect(() => {
-    fetchTeachers()
-  }, [fetchTeachers])
+  const { teachers, loading, error, fetchTeachers,deleteTeacher} = useTeachersStore();
+  useEffect(() => { fetchTeachers(); }, [fetchTeachers]);
 
 
   if (loading) return <p>Loading...</p>
@@ -55,8 +51,7 @@ export default function TeachersPage() {
                   <TableRow className="bg-neutral-50 dark:text-neutral-300 dark:bg-neutral-700">
                     <TableHead className="font-medium  dark:text-neutral-300 text-neutral-700">Name</TableHead>
                     <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Email</TableHead>
-                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Course</TableHead>
-                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Croups Assigned</TableHead>
+                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Course</TableHead>                    <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Croups Assigned</TableHead>
                     <TableHead className="font-medium dark:text-neutral-300 text-neutral-700">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -65,8 +60,8 @@ export default function TeachersPage() {
                     <TableRow key={teacher.user_id} >
                       <TableCell className="font-medium dark:text-neutral-400  text-neutral-900">{teacher.name}</TableCell>
                       <TableCell className="text-neutral-700 dark:text-neutral-400">{teacher.email}</TableCell>
-                      <TableCell className="text-neutral-700 dark:text-neutral-400">{teacher.course_name}</TableCell>
-                      <TableCell className="text-neutral-700 dark:text-neutral-400">{teacher.group.length > 0 ? teacher.group.join(', ') : 'No groups assigned'}</TableCell>
+                      <TableCell className="text-neutral-700 dark:text-neutral-400">{teacher.course_names || "No course assigned"}</TableCell>
+                      <TableCell className="text-neutral-700 dark:text-neutral-400">{teacher.groups.length > 0 ? teacher.groups.join(', ') : 'No groups assigned'}</TableCell>
                       <TableCell className="text-neutral-700">
 
                         <EditTeacher teacher={teacher} />
